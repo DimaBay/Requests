@@ -69,16 +69,6 @@ docker compose exec app ./vendor/bin/phpunit
 - `changed_by` — ID пользователя (null для создания клиентом)
 
 Просмотр: `SELECT * FROM request_logs ORDER BY created_at DESC;`
-
-## Docker команды
-
-```bash
-docker compose up -d --build   # Запуск
-docker compose down            # Остановка
-docker compose exec app php artisan migrate
-docker compose exec app php artisan db:seed
-docker compose exec app php artisan test
-docker compose logs -f app     # Логи
 ```
 
 ---
