@@ -9,10 +9,9 @@ services:
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
-      - APP_KEY=${APP_KEY}
       - APP_URL=${APP_URL:-http://localhost}
       - DB_CONNECTION=pgsql
-      - DB_HOST=db
+      - DB_HOST=postgres
       - DB_PORT=5432
       - DB_DATABASE=${DB_DATABASE:-repair_requests}
       - DB_USERNAME=${DB_USERNAME:-repair_user}
@@ -21,7 +20,7 @@ services:
       - CACHE_STORE=database
       - QUEUE_CONNECTION=database
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
 
   nginx:
@@ -36,7 +35,7 @@ services:
     depends_on:
       - app
 
-  db:
+  postgres:
     image: postgres:16-alpine
     container_name: repair_postgres_prod
     restart: always
