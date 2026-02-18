@@ -7,13 +7,22 @@ services:
     volumes:
       - .:/var/www/html
       - storage_prod:/var/www/html/storage
-    env_file:
-      - env.production.example
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
+      - APP_URL=${APP_URL:-http://localhost}
+      - APP_KEY=${APP_KEY}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-repair_requests}
+      - DB_USERNAME=${DB_USERNAME:-repair_user}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SESSION_DRIVER=database
+      - CACHE_STORE=database
+      - QUEUE_CONNECTION=database
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
 
   nginx:
@@ -24,21 +33,22 @@ services:
       - "${PORT:-80}:80"
     volumes:
       - .:/var/www/html
-      - storage_prod:/var/www/html/storage
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
 
-  db:
+  postgres:
     image: postgres:16-alpine
     container_name: repair_postgres_prod
     restart: always
-    env_file:
-      - env.production.example
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-repair_requests}
+      POSTGRES_USER: ${DB_USERNAME:-repair_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-repair_user} -d ${POSTGRES_DB:-repair_requests}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-repair_user} -d ${DB_DATABASE:-repair_requests}"]
       interval: 5s
       timeout: 5s
       retries: 5

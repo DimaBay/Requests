@@ -2,11 +2,6 @@
 
 Веб-сервис для управления заявками в ремонтную службу.
 
-## Ссылки
-
-- **GitHub**: `https://github.com/DimaBay/Requests.git`
-- **Публичный URL**: _указать после деплоя_ (например: `https://your-app.example`)
-
 ## Стек
 
 - PHP 8.2
@@ -16,7 +11,7 @@
 - Session-based auth
 - Docker Compose
 
-## Запуск
+## Локальный запуск
 
 ```bash
 # Сборка и запуск
@@ -101,7 +96,7 @@ cd repair-requests
 2. Настроить `.env`:
 ```bash
 cp env.production.example .env
-# Заполнить минимум: APP_KEY (php artisan key:generate), DB_PASSWORD/POSTGRES_PASSWORD, APP_URL
+# Отредактировать: APP_DEBUG=false, APP_ENV=production, DB_PASSWORD и т.д.
 ```
 
 3. Запуск:
@@ -112,10 +107,119 @@ docker compose -f docker-compose.prod.yml exec app php artisan migrate
 docker compose -f docker-compose.prod.yml exec app php artisan db:seed
 ```
 
-### Облачный деплой (Render / Railway / аналоги)
+### Облачный деплой (Render.com / Railway)
 
-Большинство PaaS-платформ **не поддерживают Docker Compose напрямую** (или поддерживают ограниченно). Самый простой и воспроизводимый вариант для Compose — **VM/VPS с Docker** (например, Hetzner / DigitalOcean / Selectel / Yandex Cloud Compute).
+#### Render.com
 
-Если нужно именно Render/Railway:
-- **Вариант A (рекомендуется)**: использовать VM/VPS и `docker compose` (инструкция выше).
-- **Вариант B**: собрать всё в **один контейнер** (Nginx + PHP-FPM внутри) и подключить управляемую Postgres-БД. Это потребует отдельного Dockerfile и небольшой переработки деплой-конфига.
+1. **Создать новый Web Service:**
+   - Подключить репозиторий: `https://github.com/DimaBay/Requests.git`
+   - Branch: `main`
+   - Root Directory: `.`
+   - Environment: `Docker`
+   - Dockerfile Path: `Dockerfile`
+
+2. **Добавить PostgreSQL Database:**
+   - Создать новый PostgreSQL database
+   - Запомнить connection string
+
+3. **Настроить Environment Variables:**
+   ```
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=https://your-app-name.onrender.com
+   APP_KEY=base64:... (сгенерировать: php artisan key:generate --show)
+   DB_CONNECTION=pgsql
+   DB_HOST=<из connection string>
+   DB_PORT=5432
+   DB_DATABASE=<из connection string>
+   DB_USERNAME=<из connection string>
+   DB_PASSWORD=<из connection string>
+   SESSION_DRIVER=database
+   CACHE_STORE=database
+   QUEUE_CONNECTION=database
+   PORT=80
+   ```
+
+4. **Добавить команды для первого запуска:**
+   - Build Command: `docker compose -f docker-compose.prod.yml build`
+   - Start Command: `docker compose -f docker-compose.prod.yml up`
+
+5. **После деплоя выполнить миграции:**
+   ```bash
+   # Через Render Shell или SSH
+   docker compose -f docker-compose.prod.yml exec app php artisan migrate
+   docker compose -f docker-compose.prod.yml exec app php artisan db:seed
+   ```
+
+#### Railway
+
+1. **Создать новый проект:**
+   - Connect GitHub repo: `https://github.com/DimaBay/Requests.git`
+   - Branch: `main`
+
+2. **Добавить PostgreSQL:**
+   - Add PostgreSQL service
+   - Railway автоматически создаст переменные `DATABASE_URL`
+
+3. **Настроить Environment Variables:**
+   ```
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=https://your-app-name.up.railway.app
+   APP_KEY=base64:... (сгенерировать локально)
+   DB_CONNECTION=pgsql
+   DB_HOST=${{Postgres.PGHOST}}
+   DB_PORT=${{Postgres.PGPORT}}
+   DB_DATABASE=${{Postgres.PGDATABASE}}
+   DB_USERNAME=${{Postgres.PGUSER}}
+   DB_PASSWORD=${{Postgres.PGPASSWORD}}
+   SESSION_DRIVER=database
+   CACHE_STORE=database
+   QUEUE_CONNECTION=database
+   ```
+
+4. **Настроить Deploy:**
+   - Build Command: `docker compose -f docker-compose.prod.yml build`
+   - Start Command: `docker compose -f docker-compose.prod.yml up`
+
+5. **После деплоя выполнить миграции:**
+   ```bash
+   # Через Railway CLI или Dashboard → Service → Shell
+   docker compose -f docker-compose.prod.yml exec app php artisan migrate
+   docker compose -f docker-compose.prod.yml exec app php artisan db:seed
+   ```
+
+### Проверка работы после деплоя
+
+1. **Форма создания заявки:**
+   - Открыть `https://your-app-url.com/requests/create`
+   - Создать тестовую заявку
+
+2. **Панель диспетчера:**
+   - Войти как `dispatcher@test.local` / `password`
+   - Проверить список заявок, фильтры
+   - Назначить мастера на заявку
+   - Отменить заявку
+
+3. **Панель мастера:**
+   - Войти как `master1@test.local` / `password`
+   - Проверить список назначенных заявок
+   - Взять заявку в работу
+   - Завершить заявку
+
+4. **Race condition:**
+   ```bash
+   BASE_URL=https://your-app-url.com bash race_test.sh 3
+   # Ожидается: один запрос 302, второй 409
+   ```
+
+5. **Audit log:**
+   ```sql
+   SELECT * FROM request_logs ORDER BY created_at DESC;
+   ```
+
+## Публичный URL
+
+После деплоя обновить этот раздел с реальным URL проекта.
+
+**GitHub:** https://github.com/DimaBay/Requests.git
