@@ -2,6 +2,11 @@
 
 Веб-сервис для управления заявками в ремонтную службу.
 
+## Ссылки
+
+- **GitHub**: `https://github.com/DimaBay/Requests.git`
+- **Публичный URL**: _указать после деплоя_ (например: `https://your-app.example`)
+
 ## Стек
 
 - PHP 8.2
@@ -89,15 +94,14 @@ docker compose logs -f app     # Логи
 
 1. Клонировать репозиторий:
 ```bash
-git clone <repo_url> repair-requests
+git clone https://github.com/DimaBay/Requests.git repair-requests
 cd repair-requests
 ```
 
 2. Настроить `.env`:
 ```bash
-cp .env.example .env
-# Отредактировать: APP_DEBUG=false, APP_ENV=production, DB_PASSWORD и т.д.
-# Для продакшена — env.production.example как образец
+cp env.production.example .env
+# Заполнить минимум: APP_KEY (php artisan key:generate), DB_PASSWORD/POSTGRES_PASSWORD, APP_URL
 ```
 
 3. Запуск:
@@ -107,3 +111,11 @@ docker compose -f docker-compose.prod.yml exec app php artisan key:generate
 docker compose -f docker-compose.prod.yml exec app php artisan migrate
 docker compose -f docker-compose.prod.yml exec app php artisan db:seed
 ```
+
+### Облачный деплой (Render / Railway / аналоги)
+
+Большинство PaaS-платформ **не поддерживают Docker Compose напрямую** (или поддерживают ограниченно). Самый простой и воспроизводимый вариант для Compose — **VM/VPS с Docker** (например, Hetzner / DigitalOcean / Selectel / Yandex Cloud Compute).
+
+Если нужно именно Render/Railway:
+- **Вариант A (рекомендуется)**: использовать VM/VPS и `docker compose` (инструкция выше).
+- **Вариант B**: собрать всё в **один контейнер** (Nginx + PHP-FPM внутри) и подключить управляемую Postgres-БД. Это потребует отдельного Dockerfile и небольшой переработки деплой-конфига.

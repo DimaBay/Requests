@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\RepairRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Tests\TestCase;
 
 class RaceConditionTest extends TestCase
@@ -13,6 +14,8 @@ class RaceConditionTest extends TestCase
 
     public function test_start_succeeds_when_status_is_assigned(): void
     {
+        $this->withoutMiddleware(ValidateCsrfToken::class);
+
         $master = User::factory()->create(['role' => 'master']);
         $request = RepairRequest::create([
             'client_name' => 'Клиент',
@@ -33,6 +36,8 @@ class RaceConditionTest extends TestCase
 
     public function test_start_returns_409_on_duplicate_request(): void
     {
+        $this->withoutMiddleware(ValidateCsrfToken::class);
+
         $master = User::factory()->create(['role' => 'master']);
         $request = RepairRequest::create([
             'client_name' => 'Клиент',

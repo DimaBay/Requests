@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\RequestStatus;
 use App\Models\RepairRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Tests\TestCase;
 
 class RequestCreationTest extends TestCase
@@ -13,6 +14,8 @@ class RequestCreationTest extends TestCase
 
     public function test_request_can_be_created(): void
     {
+        $this->withoutMiddleware(ValidateCsrfToken::class);
+
         $response = $this->post(route('requests.store'), [
             'client_name' => 'Тестовый Клиент',
             'phone' => '+7 999 123-45-67',
